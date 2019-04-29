@@ -49,6 +49,10 @@ class CustomUserChangeForm(UserChangeForm):
     def clean_email(self):
         if self.cleaned_data["email"].strip() == '':
             raise ValidationError("Email is required.")
+
+        users = self._meta.model.objects.filter(email=self.cleaned_data["email"])
+        if users:
+            raise ValidationError("Such email already exists")
         return self.cleaned_data["email"]
 
 

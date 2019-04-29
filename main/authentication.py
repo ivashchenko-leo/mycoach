@@ -7,6 +7,8 @@ from django.utils import timezone
 from django.conf import settings
 
 from django.utils.translation import gettext
+from django.contrib.auth import get_user_model
+from django.contrib.auth.backends import ModelBackend
 
 
 def expires_in(token):
@@ -51,3 +53,19 @@ class ExpiringTokenAuthentication(TokenAuthentication):
             raise AuthenticationFailed(gettext("The Token is expired"))
 
         return token.user, token
+
+
+class EmailBackend(ModelBackend):
+    def authenticate(self, request, username=None, password=None, **kwargs):
+        user_model = get_user_model()
+        if username is None:
+            username = kwargs.get(user_model.USERNAME_FIELD)
+
+        try:
+            user = user_model.objects.get(email=username)
+        except user_model.DoesNotExist:
+            return None
+        else:
+            if user.check_password(password) and self.user_can_authenticate(user):
+                return user
+        return None
