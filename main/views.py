@@ -6,8 +6,15 @@ from django.http import HttpResponse, HttpRequest, JsonResponse
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils.translation import gettext
 from .models import CoachProfile, CoachPost
-from .forms import CoachPhotoForm, CoachPostForm, CoachProfileForm
+from .forms import CoachPhotoForm, CoachPostForm, CoachProfileForm, UserSigninSerializer
 from .validation import is_coach
+from django.contrib.auth import authenticate
+from rest_framework.authtoken.models import Token
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_401_UNAUTHORIZED, HTTP_200_OK
+
+from .authentication import token_expire_handler, expires_in
 
 
 @require_GET
@@ -44,7 +51,7 @@ def get_profile(request: HttpRequest, profile_code: UUID) -> HttpResponse:
         .annotate(sports=ArrayAgg('sports__name'), photos=ArrayAgg('photos__image', True))
 
     if not profiles:
-        return HttpResponse(status=404)
+        return HttpResponse(status=HTTP_404_NOT_FOUND)
 
     profiles[0]['owner'] = profiles[0].pop('user__first_name', '') + ' ' + profiles[0].pop('user__last_name', '')
 
@@ -70,8 +77,8 @@ def add_post(request: HttpRequest) -> HttpResponse:
         post.user = request.user
         post.save()
 
-        return HttpResponse(status=200)
-    return JsonResponse(form.errors, status=400)
+        return HttpResponse(status=HTTP_200_OK)
+    return JsonResponse(form.errors, status=HTTP_400_BAD_REQUEST)
 
 
 """"@login_required
@@ -83,3 +90,27 @@ def add_profile(request: HttpRequest) -> HttpResponse:
     if profiles:
         return JsonResponse({'error': [gettext('Profile already exists')]}, status=400)
 """
+
+
+@api_view(["POST"])
+@permission_classes((AllowAny,))
+def sign_in(request: HttpRequest) -> HttpResponse:
+    sign_in_serializer = UserSigninSerializer(data=request.POST)
+    if not sign_in_serializer.is_valid():
+        return JsonResponse(sign_in_serializer.errors, status=HTTP_400_BAD_REQUEST)
+
+    user = authenticate(username=sign_in_serializer.data['username'], password=sign_in_serializer.data['password'])
+    if not user:
+        return JsonResponse({'error': gettext('Invalid credentials or activate account')},
+                            status=HTTP_401_UNAUTHORIZED)
+
+    # TOKEN STUFF
+    token, _ = Token.objects.get_or_create(user=user)
+
+    # token_expire_handler will check, if the token is expired it will generate new one
+    is_expired, token = token_expire_handler(token)
+    user_serialized = {'email': user.email, 'first_name': user.first_name, 'last_name': user.last_name}
+
+    return JsonResponse({'user': user_serialized, 'expires_in': expires_in(token), 'token': token.key},
+                        status=HTTP_200_OK)
+

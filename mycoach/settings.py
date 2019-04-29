@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework.authtoken',
     'main.apps.MainConfig',
 ]
 
@@ -143,3 +145,14 @@ LOCALE_PATHS = [
 
 CSRF_COOKIE_SECURE = False
 SESSION_COOKIE_SECURE = False
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'main.authentication.ExpiringTokenAuthentication',
+    )
+}
+
+TOKEN_EXPIRED_AFTER_SECONDS = 24*60*60
