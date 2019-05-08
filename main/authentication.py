@@ -1,6 +1,7 @@
 from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.permissions import BasePermission
 
 from datetime import timedelta
 from django.utils import timezone
@@ -69,3 +70,12 @@ class EmailBackend(ModelBackend):
             if user.check_password(password) and self.user_can_authenticate(user):
                 return user
         return None
+
+
+class IsCoach(BasePermission):
+    """
+    Allows to have access only to coaches or staff.
+    """
+
+    def has_permission(self, request, view):
+        return request.user.groups.filter(name='Coaches').exists() or request.user.is_staff

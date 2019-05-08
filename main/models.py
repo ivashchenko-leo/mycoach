@@ -7,6 +7,10 @@ from django.contrib.postgres.fields import JSONField
 from django.utils.timezone import now
 
 
+def upload_photo(photo, filename):
+    return "images/%s/%s" % (photo.user.id, filename)
+
+
 class Sport(models.Model):
     code = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.TextField()
@@ -21,7 +25,7 @@ class Sport(models.Model):
 class CoachPhoto(models.Model):
     code = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    image = models.ImageField()
+    image = models.ImageField(upload_to=upload_photo)
 
     class Meta:
         db_table = 'coach_photos'

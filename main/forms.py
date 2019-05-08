@@ -51,6 +51,8 @@ class CustomUserChangeForm(UserChangeForm):
             raise ValidationError("Email is required.")
 
         users = self._meta.model.objects.filter(email=self.cleaned_data["email"])
+        users = [user for user in users if user.username != self.cleaned_data["username"]]
+
         if users:
             raise ValidationError("Such email already exists")
         return self.cleaned_data["email"]
