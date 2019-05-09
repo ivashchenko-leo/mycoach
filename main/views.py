@@ -28,7 +28,7 @@ def get_sports(request: HttpRequest) -> HttpResponse:
 def get_profiles(request: HttpRequest) -> HttpResponse:
     public_profiles = CoachProfile.objects.filter(is_public=True)\
         .values('code', 'description', 'timestamp', 'user__first_name', 'user__last_name')\
-        .annotate(sports=ArrayAgg('sports__name'), photos=ArrayAgg('photos__image', True))\
+        .annotate(sports=ArrayAgg('sports__name', True), photos=ArrayAgg('photos__image', True))\
 
     result = []
     for profile in public_profiles:
@@ -57,7 +57,7 @@ def get_posts(request: HttpRequest) -> HttpResponse:
 def get_profile(request: HttpRequest, profile_code: UUID) -> HttpResponse:
     profiles = CoachProfile.objects.filter(code=profile_code, is_public=True)\
         .values('code', 'description', 'timestamp', 'user__first_name', 'user__last_name', 'content') \
-        .annotate(sports=ArrayAgg('sports__name'), photos=ArrayAgg('photos__image', True))
+        .annotate(sports=ArrayAgg('sports__name', True), photos=ArrayAgg('photos__image', True))
 
     if not profiles:
         return HttpResponse(status=HTTP_404_NOT_FOUND)
@@ -189,23 +189,29 @@ def add_profile(request: HttpRequest) -> HttpResponse:
         profile.user = request.user
         profile.save()
 
+        profile.sports.set(Sport.objects.filter(code__in=request.POST['sports'].split(",")))
+        profile.photos.set(CoachPhoto.objects.filter(code__in=request.POST['photos'].split(",")))
+
         return HttpResponse(status=HTTP_200_OK)
     return JsonResponse(form.errors, status=HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
 @permission_classes((IsCoach,))
-def update_profile(request: HttpRequest, profile_code: UUID) -> HttpResponse:
-    profile = CoachProfile.objects.filter(pk=profile_code, user=request.user)
+def update_profile(request: HttpRequest) -> HttpResponse:
+    profile = get_object_or_404(CoachProfile, user=request.user)
+
     form = CoachProfileForm(request.POST)
     if form.is_valid():
-        profile.description = form.description
-        profile.is_public = form.is_public
+        profile.description = form.cleaned_data["description"]
         profile.timestamp = now()
-        profile.content = form.content
-        profile.sports = Sport.objects.filter(code__in=form.sports)
-        profile.photos = CoachPhoto.objects.filter(code__in=form.photos)
+        profile.content = form.cleaned_data["content"]
+        profile.is_public = form.cleaned_data["is_public"]
+        profile.user = request.user
         profile.save()
+
+        profile.sports.set(Sport.objects.filter(code__in=request.POST['sports'].split(",")))
+        profile.photos.set(CoachPhoto.objects.filter(code__in=request.POST['photos'].split(",")))
 
         return HttpResponse(status=HTTP_200_OK)
     return JsonResponse(form.errors, status=HTTP_400_BAD_REQUEST)
@@ -213,18 +219,18 @@ def update_profile(request: HttpRequest, profile_code: UUID) -> HttpResponse:
 
 @api_view(["POST"])
 @permission_classes((IsCoach,))
-def remove_profile(request: HttpRequest, profile_code: UUID) -> HttpResponse:
-    CoachProfile.objects.filter(pk=profile_code, user=request.user).delete()
+def remove_profile(request: HttpRequest) -> HttpResponse:
+    CoachProfile.objects.filter(user=request.user).delete()
 
     return HttpResponse(status=HTTP_200_OK)
 
 
 @api_view(["GET"])
 @permission_classes((IsCoach,))
-def get_my_profile(request: HttpRequest, profile_code: UUID) -> HttpResponse:
-    profiles = CoachProfile.objects.filter(code=profile_code, user=request.user) \
+def get_my_profile(request: HttpRequest) -> HttpResponse:
+    profiles = CoachProfile.objects.filter(user=request.user) \
         .values('code', 'description', 'timestamp', 'user__first_name', 'user__last_name', 'content', 'is_public') \
-        .annotate(sports=ArrayAgg('sports__name'), photos=ArrayAgg('photos__image', True))
+        .annotate(sports=ArrayAgg('sports__name', True), photos=ArrayAgg('photos__image', True))
 
     if not profiles:
         return HttpResponse(status=HTTP_404_NOT_FOUND)
@@ -232,14 +238,6 @@ def get_my_profile(request: HttpRequest, profile_code: UUID) -> HttpResponse:
     profiles[0]['owner'] = profiles[0].pop('user__first_name', '') + ' ' + profiles[0].pop('user__last_name', '')
 
     return JsonResponse(profiles[0])
-
-
-@api_view(["GET"])
-@permission_classes((IsCoach,))
-def remove_profile(request: HttpRequest, profile_code: UUID) -> HttpResponse:
-    CoachProfile.objects.filter(pk=profile_code, user=request.user).delete()
-
-    return HttpResponse(status=HTTP_200_OK)
 
 
 @api_view(["POST"])
@@ -251,8 +249,7 @@ def sign_in(request: HttpRequest) -> HttpResponse:
 
     user = authenticate(username=sign_in_serializer.data['username'], password=sign_in_serializer.data['password'])
     if not user:
-        return JsonResponse({'error': ['Invalid credentials']},
-                            status=HTTP_401_UNAUTHORIZED)
+        return JsonResponse({'error': ['Invalid credentials']}, status=HTTP_401_UNAUTHORIZED)
 
     token, _ = Token.objects.get_or_create(user=user)
 
@@ -260,5 +257,4 @@ def sign_in(request: HttpRequest) -> HttpResponse:
     is_expired, token = token_expire_handler(token)
     user_serialized = {'email': user.email, 'first_name': user.first_name, 'last_name': user.last_name}
 
-    return JsonResponse({'user': user_serialized, 'expires_in': expires_in(token), 'token': token.key},
-                        status=HTTP_200_OK)
+    return JsonResponse({'user': user_serialized, 'expires_in': expires_in(token), 'token': token.key})

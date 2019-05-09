@@ -9,7 +9,7 @@ from django.contrib.auth.admin import UserAdmin
 class CoachProfileForm(forms.ModelForm):
     class Meta:
         model = CoachProfile
-        fields = ('description', 'content', 'is_public', 'sports', 'photos')
+        fields = ('description', 'content', 'is_public')
 
 
 class CoachPhotoForm(forms.ModelForm):
@@ -50,7 +50,7 @@ class CustomUserChangeForm(UserChangeForm):
         if self.cleaned_data["email"].strip() == '':
             raise ValidationError("Email is required.")
 
-        users = self._meta.model.objects.filter(email=self.cleaned_data["email"])
+        users = self.instance.objects.filter(email=self.cleaned_data["email"])
         users = [user for user in users if user.username != self.cleaned_data["username"]]
 
         if users:

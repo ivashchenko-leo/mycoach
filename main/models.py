@@ -13,7 +13,7 @@ def upload_photo(photo, filename):
 
 class Sport(models.Model):
     code = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.TextField()
+    name = models.TextField(unique=True)
 
     def __str__(self):
         return self.name + " (" + str(self.code) + ")"
@@ -35,7 +35,7 @@ class CoachProfile(models.Model):
     code = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     description = models.TextField()
     timestamp = models.DateTimeField(default=now)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     content = JSONField()
     sports = models.ManyToManyField(Sport)
     photos = models.ManyToManyField(CoachPhoto)
