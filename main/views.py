@@ -257,4 +257,7 @@ def sign_in(request: HttpRequest) -> HttpResponse:
     is_expired, token = token_expire_handler(token)
     user_serialized = {'email': user.email, 'first_name': user.first_name, 'last_name': user.last_name}
 
-    return JsonResponse({'user': user_serialized, 'expires_in': expires_in(token), 'token': token.key})
+    response = JsonResponse({'user': user_serialized, 'expires_in': expires_in(token), 'token': token.key})
+    response.set_cookie('token', token.key, httponly=True)
+
+    return response
