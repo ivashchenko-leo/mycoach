@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <title>MyCoach</title>
+  </head>
+  <body>
+    <div id="content">
+        <header>
+          <div class="navbar navbar-dark bg-dark shadow-sm">
+            <div class="container d-flex justify-content-between">
+              <a href="#" class="navbar-brand d-flex align-items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                <strong>Profiles</strong>
+              </a>
+            </div>
+          </div>
+        </header>
+
+        <main role="main" class="container">
+            <form class="form-post mt-5 mb-5" method="POST" action="/post/add">
+                <div class="form-group">
+                    <label for="inputTitle">Title</label>
+                    <input name="title" id="inputTitle" class="form-control" placeholder="Title" required autofocus/>
+                </div>
+                <div class="form-group">
+                    <label for="inputTags">Tags</label>
+                    <input name="tags" id="inputTags" class="form-control" placeholder="Tags"/>
+                    <small id="tagsHelp" class="form-text text-muted">Input tags separated by spaces, e.g (tabletennis tokyo shinjuku)</small>
+                </div>
+                <div class="checkbox mb-3">
+                    <label>
+                      <input id="inputIsPublic" type="checkbox" name="is_public"> Publish?
+                    </label>
+                </div>
+                <label>Content</label>
+                <div id="codex-editor" class="editorjs">
+                </div>
+                <button id="submitPost" class="btn btn-primary btn-block col-md-3" type="button">Submit</button>
+            </form>
+        </main>
+
+        <footer class="text-muted">
+          <div class="container">
+            <p class="float-right">
+              <a href="#">Back to top</a>
+            </p>
+            <p>Icons provided by <a href="https://icons8.com">icons8</a> </p>
+          </div>
+        </footer>
+    </div>
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    <script src="/static/js/editor.min.js" type="application/javascript"></script>
+    <script src="/static/js/editor.header.js" type="application/javascript"></script>
+    <script src="/static/js/editor.list.js" type="application/javascript"></script>
+    <script src="/static/js/editor.image.js" type="application/javascript"></script>
+    <script src="/static/js/config.js" type="application/javascript"></script>
+    <script>
+        $(document).ready(function () {
+            const editor = new EditorJS({
+                  holder: 'codex-editor',
+                  tools: {
+                    header: Header,
+                    list: List,
+                    image: SimpleImage
+                  }
+            });
+
+            $('#submitPost').on('click', function (event) {
+                editor.save().then((content) => {
+                    var data = {
+                        title: $('#inputTitle')[0].value,
+                        is_public: $('#inputIsPublic')[0].value === "on" ? "true" : "false",
+                        tags: $('#inputTags')[0].value,
+                        content: JSON.stringify(content)
+                    };
+
+                    $.post('/posts/add', data, function(response, status) {
+                        window.location.replace("/static/my/posts.html");
+                    });
+                }).catch((error) => {
+                    console.log('Saving failed: ', error);
+                });
+            });
+        });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,11 @@
+.plus-vid {
+  height: 40px;
+  width: 40px;
+  background-image: url("/static/img/icons8-plus-blue.png");
+  background-size: 40px 40px;
+}
+
+.plus-vid:hover {
+  background: url("/static/img/icons8-plus-gray.png");
+  background-size: 40px 40px;
+}

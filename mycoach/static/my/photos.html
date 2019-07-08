@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link rel="stylesheet" href="/static/css/album.css"/>
+    <title>MyCoach</title>
+  </head>
+  <body>
+    <div id="content">
+        <header>
+          <div class="navbar navbar-dark bg-dark shadow-sm">
+            <div class="container d-flex justify-content-between">
+              <a href="#" class="navbar-brand d-flex align-items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                <strong>Profiles</strong>
+              </a>
+              <a href="" class="navbar-brand d-flex align-items-center" data-toggle="modal" data-target="#photoModal">
+                  <div class="plus-vid"></div>
+              </a>
+            </div>
+          </div>
+        </header>
+
+        <main role="main">
+          <div class="album py-5 pt-1 bg-light">
+            <div class="container">
+            </div>
+          </div>
+        </main>
+
+        <div class="modal" tabindex="-1" id="photoModal" role="dialog">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Add a photo!</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <form action="/photos/add" enctype="multipart/form-data" method="POST">
+                  <div class="modal-body">
+                      <div class="form-group">
+                        <input name="image" type="file" class="form-control-file" id="photoInput">
+                      </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                  </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <footer class="text-muted pt-2">
+          <div class="container">
+            <p class="float-right">
+              <a href="#">Back to top</a>
+            </p>
+            <p>Icons provided by <a href="https://icons8.com">icons8</a> </p>
+          </div>
+        </footer>
+    </div>
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    <script src="/static/js/config.js" type="application/javascript"></script>
+    <script>
+        $(document).ready(function () {
+           $.getJSON("/photos/", function (data) {
+               var html = "";
+               if (data === undefined || data.length === 0) {
+                   html = "<h1 class=\"text-muted text-center\">No available photos :(</h1>\n" +
+                       "                  <h2 class=\"text-muted text-center\">\n" +
+                       "                      Click\n" +
+                       "                      <a class=\"text-primary\" href=\"\" data-toggle=\"modal\" data-target=\"#photoModal\">here</a>\n" +
+                       "                      to add one\n" +
+                       "                  </h2>";
+               } else {
+                   data.forEach(function (photo) {
+                       html += "<div class=\"col-md-4\">\n" +
+                       "                      <div class=\"card mb-4 shadow-sm\">\n" +
+                       "                        <img class=\"card-img-top\" src=\"/media/" + photo.image + "\" onerror=\"this.src='/static/img/anonymous.jpg'\">\n" +
+                       "                      </div>" +
+                       "                    </div>";
+                   });
+               }
+
+               $('main .container').append(html);
+           });
+        });
+    </script>
+  </body>
+</html>
